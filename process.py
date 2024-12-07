@@ -153,10 +153,12 @@ class imageProcess():
     """
     def __init__(self, file_path: str):
         if '.bmp' in file_path:
+            # 读取BMP图像
             self.img = bmpImage(file_path)
             self.rgb_image = self.img.rgb_image
             self.gray_image = self.img.gray_image
         else:
+            # 兼容其他格式的图像
             self.img = Image.open(file_path)
             self.rgb_image = np.array(self.img)
             self.gray_image = np.array(self.img.convert('L'))
@@ -222,6 +224,108 @@ class imageProcess():
         
         self.processed_image = noisy_image
         return noisy_image
+    
+    def random_crop(self, crop_size: int = 256):
+        """
+        随机位置裁剪
+
+        Args:
+            crop_size (int): 裁剪大小，默认为256
+        """
+        start_x = np.random.randint(0, self.width - crop_size)
+        start_y = np.random.randint(0, self.height - crop_size)
+        cropped_image = self.rgb_image[start_y:start_y + crop_size, start_x:start_x + crop_size]
+
+        self.processed_image = cropped_image
+        return cropped_image
+    
+    def center_crop(self, crop_size: int = 256):
+        """
+        中心裁剪
+        """
+        crop_size = min(self.width // 2, self.height // 2, crop_size)
+        start_x = (self.width - crop_size) // 2
+        start_y = (self.height - crop_size) // 2
+        cropped_image = self.rgb_image[start_y:start_y + crop_size, start_x:start_x + crop_size]
+
+        self.processed_image = cropped_image
+        return cropped_image
+    
+    def horizontal_flip(self):
+        """
+        随机水平翻转
+        """
+        flipped_image = np.fliplr(self.rgb_image)
+        self.processed_image = flipped_image
+        return flipped_image
+    
+    def vertical_flip(self):
+        """
+        随机垂直翻转
+        """
+        flipped_image = np.flipud(self.rgb_image)
+        self.processed_image = flipped_image
+        return flipped_image
+    
+    def rotation(self, angle: int = 90):
+        """
+        随机角度旋转
+
+        Args:
+            angle (int): 旋转角度，默认为90
+        """
+        # 将角度转换为弧度
+        angle_rad = np.deg2rad(angle)
+        
+        # 获取图像的中心
+        center_x, center_y = self.rgb_image.shape[1] // 2, self.rgb_image.shape[0] // 2
+        
+        # 创建旋转矩阵
+        rotation_matrix = np.array([
+            [np.cos(angle_rad), -np.sin(angle_rad)],
+            [np.sin(angle_rad), np.cos(angle_rad)]
+        ])
+        
+        # 创建空白图像
+        rotated_image = np.zeros_like(self.rgb_image)
+        
+        # 遍历每个像素
+        for y in range(self.rgb_image.shape[0]):
+            for x in range(self.rgb_image.shape[1]):
+                # 计算新位置
+                new_x, new_y = np.dot(rotation_matrix, np.array([x - center_x, y - center_y]))
+                new_x, new_y = int(new_x + center_x), int(new_y + center_y)
+                
+                # 检查新位置是否在图像范围内
+                if 0 <= new_x < self.rgb_image.shape[1] and 0 <= new_y < self.rgb_image.shape[0]:
+                    rotated_image[new_y, new_x] = self.rgb_image[y, x]
+        
+        self.processed_image = rotated_image
+        return rotated_image
+    
+    
+    def padding(self, padding_size: int = 256):
+        """
+        padding为正方形
+
+        Args:
+            padding_size (int): padding大小，默认为256
+        """
+        # 计算新的尺寸，确保图像是正方形
+        new_size = max(self.height, self.width, padding_size)
+        
+        # 计算填充的大小
+        pad_height = (new_size - self.height) // 2
+        pad_width = (new_size - self.width) // 2
+        
+        # 创建一个新的图像，填充为黑色（0）
+        padded_image = np.zeros((new_size, new_size, 3), dtype=self.rgb_image.dtype)
+        
+        # 将原始图像复制到新的图像中间
+        padded_image[pad_height:pad_height + self.height, pad_width:pad_width + self.width] = self.rgb_image
+        
+        self.processed_image = padded_image
+        return padded_image
 
     def add_salt_and_pepper_noise(self, salt_prob: float = 0.01, pepper_prob: float = 0.01) -> np.ndarray:
         """
@@ -296,7 +400,7 @@ class imageProcess():
 
     def save_processed_img(self, save_path: str):
         """
-        保存均衡化后的图像
+        保存处理后的图像
 
         Args:
             save_path (str): 保存路径

@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, simpledialog
 from PIL import Image, ImageTk
 import numpy as np
 from process import imageProcess  
@@ -52,9 +52,36 @@ class ImageProcessGUI:
         self.salt_pepper_noise_button = tk.Button(button_frame, text="Add Salt and Pepper Noise", command=self.display_salt_pepper_noise_image, state=tk.DISABLED)
         self.salt_pepper_noise_button.pack(pady=5, fill=tk.X)
 
+        # 创建随机位置裁剪按钮
+        self.random_crop_button = tk.Button(button_frame, text="Random Crop", command=self.display_random_crop_image, state=tk.DISABLED)
+        self.random_crop_button.pack(pady=5, fill=tk.X)
+
+        # 创建中心剪裁按钮
+        self.center_crop_button = tk.Button(button_frame, text="Center Crop", command=self.display_center_crop_image, state=tk.DISABLED)
+        self.center_crop_button.pack(pady=5, fill=tk.X)
+
+        # 创建随机水平翻转按钮
+        self.flip_horizontal_button = tk.Button(button_frame, text="Flip Horizontal", command=self.display_horizontal_flip_image, state=tk.DISABLED)
+        self.flip_horizontal_button.pack(pady=5, fill=tk.X)
+
+        # 创建随机垂直翻转按钮
+        self.flip_vertical_button = tk.Button(button_frame, text="Flip Vertical", command=self.display_vertical_flip_image, state=tk.DISABLED)
+        self.flip_vertical_button.pack(pady=5, fill=tk.X)
+
+        # 创建随机旋转按钮
+        self.rotation_button = tk.Button(button_frame, text="Rotation", command=self.display_rotation, state=tk.DISABLED)
+        self.rotation_button.pack(pady=5, fill=tk.X)
+
+        # 创建padding按钮
+        self.padding_button = tk.Button(button_frame, text="Padding", command=self.display_padding, state=tk.DISABLED)
+        self.padding_button.pack(pady=5, fill=tk.X)
+
+        
         # 创建保存处理后图像按钮
         self.save_button = tk.Button(button_frame, text="Save Processed Image", command=self.save_processed_image, state=tk.DISABLED)
         self.save_button.pack(pady=5, fill=tk.X)
+
+
 
         # 创建作者信息标签
         self.author_label = tk.Label(root, text="Author: Heng Yongrui  Email: 22281067@bjtu.edu.cn", font=("Helvetica", 10, "italic"))
@@ -88,6 +115,13 @@ class ImageProcessGUI:
             self.median_filter_button.config(state=tk.NORMAL)
             self.gaussian_noise_button.config(state=tk.NORMAL)
             self.salt_pepper_noise_button.config(state=tk.NORMAL)
+            self.random_crop_button.config(state=tk.NORMAL)
+            self.center_crop_button.config(state=tk.NORMAL)
+            self.flip_horizontal_button.config(state=tk.NORMAL)
+            self.flip_vertical_button.config(state=tk.NORMAL)
+            self.rotation_button.config(state=tk.NORMAL)
+            self.padding_button.config(state=tk.NORMAL)
+
         except Exception as e:
             messagebox.showerror("Error", f"Unable to load image file: {e}")
 
@@ -138,8 +172,41 @@ class ImageProcessGUI:
         salt_pepper_noise_image = self.img.add_salt_and_pepper_noise(salt_prob = 0.02, pepper_prob = 0.02)
         self.display_processed_image(salt_pepper_noise_image)
         
+    def display_random_crop_image(self):
+        # 随机位置裁剪并显示
+        random_cropped_image = self.img.random_crop(self.img.width // 2)
+        self.display_processed_image(random_cropped_image)
+
+    def display_center_crop_image(self):
+        # 中心剪裁并显示
+        center_cropped_image = self.img.center_crop()
+        self.display_processed_image(center_cropped_image)
+    
+    def display_horizontal_flip_image(self):
+        # 随机水平翻转并显示
+        flipped_image = self.img.horizontal_flip()
+        self.display_processed_image(flipped_image)
+
+    def display_vertical_flip_image(self):
+        # 随机垂直翻转并显示
+        flipped_image = self.img.vertical_flip()
+        self.display_processed_image(flipped_image)
+    
+    def display_rotation(self):
+        # 随机旋转并显示
+        # 跳出弹窗，选择角度
+        angle = simpledialog.askinteger("Input", "Enter rotation angle:", minvalue=0, maxvalue=360)
+        if angle is not None:
+            rotated_image = self.img.rotation(angle)
+            self.display_processed_image(rotated_image)
+    
+    def display_padding(self):
+        # padding为正方形并显示
+        padded_image = self.img.padding()
+        self.display_processed_image(padded_image)
+
     def save_processed_image(self):
-        # 保存均衡化图像
+        # 保存处理后的图像
         save_path = filedialog.asksaveasfilename(filetypes=[("BMP Image", "*.bmp"), ("JPEG Image", "*.jpg"), ("PNG Image", "*.png")])
         if save_path:
             try:
